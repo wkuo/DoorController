@@ -63,11 +63,11 @@ void unlock() {
 }
  
 void loop() {
-  debugDongle();
+  debugDonglePrintout();
   
-  int near = digitalRead(NEAR_PIN);
+  
   //temporary disable the near detection for testing
-  //if (near == HIGH) {
+  //if ( digitalRead(NEAR_PIN) == HIGH ) {
     if (module->isA()==LOW) {
       motorAForward();
     } else if (module->isB()==LOW) {
