@@ -11,7 +11,6 @@ YK04_Module* module;
 int enA = 6; //previously 9
 int in1 = 8;
 int in2 = 7;
-int maxSpeedA = 255;
 int delayA = 10000;
 int stateA = 0;
  
@@ -23,7 +22,6 @@ int sensorB1 = A0;
 int sensorB2 = A1;
 int sensorA1 = A2;
 int sensorA2 = A3;
-int maxSpeedB = 255;
 int delayB = 750;
 int stateB = 0;
 
@@ -49,17 +47,17 @@ int getLastBState() {
   return stateB;
 }
 
-void doorClose() {
-  motorAForward();
+void doorClose(int motorspeed) {
+  motorAForward(motorspeed);
 }
-void doorOpen() {
-  motorABackward();
+void doorOpen(int motorspeed) {
+  motorABackward(motorspeed);
 }
-void lock() {
-  motorBForward();
+void lock(int motorspeed) {
+  motorBForward(motorspeed);
 }
-void unlock() {
-  motorBBackward();
+void unlock(int motorspeed) {
+  motorBBackward(motorspeed);
 }
  
 void loop() {
@@ -69,14 +67,26 @@ void loop() {
   //temporary disable the near detection for testing
   //if ( digitalRead(NEAR_PIN) == HIGH ) {
     if (module->isA()==LOW) {
-      motorAForward();
+      while(module->isA()==LOW)
+        motorAForward(255);
     } else if (module->isB()==LOW) {
-      motorABackward();
+      while (module->isB()==LOW)
+        motorABackward(255);
     } else if (module->isC()==LOW) {
-      motorBForward();
+      while (module->isC()==LOW)
+        motorBForward(255);
     } else if (module->isD()==LOW) {
-      motorBBackward(); 
+      while (module->isD()==LOW)
+        motorBBackward(255); 
     }
+    else{
+      motorAStop();
+      motorBStop();
+    }
+
+
+
+    
   //}
  
 }
