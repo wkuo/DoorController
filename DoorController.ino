@@ -1,4 +1,6 @@
 #include <YK04_Module.h>
+//https://github.com/YuriiSalimov/YK04_Module/blob/master/src/YK04_Module.cpp
+//https://github.com/YuriiSalimov/YK04_Module/blob/master/src/YK04_Module.h
 
 #define A_PIN  14
 #define B_PIN  10
@@ -59,6 +61,8 @@ void lock(int motorspeed) {
 void unlock(int motorspeed) {
   motorBBackward(motorspeed);
 }
+
+
  
 void loop() {
   debugDonglePrintout();
@@ -84,9 +88,53 @@ void loop() {
       motorBStop();
     }
 
-
-
-    
-  //}
+  // possibleDigitalOnlyTest();// to test if YK04 is only digital read
  
 }
+
+
+
+
+
+void possibleDigitalOnlyTest(){
+    pinMode(A_PIN, INPUT);
+    pinMode(B_PIN, INPUT);    
+    pinMode(C_PIN, INPUT);
+    pinMode(D_PIN, INPUT);
+    digitalWrite(A_PIN, HIGH);
+    digitalWrite(B_PIN, HIGH);
+    digitalWrite(C_PIN, HIGH);
+    digitalWrite(D_PIN, HIGH);
+
+        
+    if (digitalRead(A_PIN)==LOW) {
+      while(module->isA()==LOW)
+        motorAForward(255);
+    }
+    
+    else if (digitalRead(B_PIN)==LOW) {
+      while (module->isB()==LOW)
+        motorABackward(255);
+    }
+    
+    else if (digitalRead(C_PIN)==LOW) {
+      while (module->isC()==LOW)
+        motorBForward(255);
+    } 
+    
+    else if (digitalRead(D_PIN)==LOW) {
+      while (module->isD()==LOW)
+        motorBBackward(255); 
+    }
+    
+    else{
+      
+      motorAStop();
+      motorBStop();
+      
+    }
+
+    
+}
+
+
