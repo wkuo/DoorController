@@ -11,6 +11,7 @@ void motorAForward(int motorspeed) {
   digitalWrite(in1, HIGH);
   digitalWrite(in2, LOW);
   analogWrite(enA, motorspeed); 
+  
 }
 
 void motorABackward(int motorspeed) {
@@ -37,5 +38,3 @@ void motorBBackward(int motorspeed) {
   analogWrite(enB, motorspeed);
 
 }
-
-
