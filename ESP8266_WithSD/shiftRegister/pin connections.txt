@@ -1,0 +1,10 @@
+
+74595 Shift register to ESP8266 Nodemcu
+SRCLR (bar) and VCC to 3.3v
+OE (bar) and GND to Gnd
+SER to GPIO12 D6 
+RCLK to GPIO13 D7 
+SRCLKto GPIO15 D8 
+
+
+https://i2.wp.com/techtutorialsx.com/wp-content/uploads/2016/08/esp8266-to-74hc595-connection.png?zoom=2&resize=499%2C303&ssl=1
