@@ -1,12 +1,15 @@
-#include <YK04_Module.h>
-//https://github.com/YuriiSalimov/YK04_Module/blob/master/src/YK04_Module.cpp
-//https://github.com/YuriiSalimov/YK04_Module/blob/master/src/YK04_Module.h
+#define BLYNK_PRINT Serial
+
+#include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
 
 //enable if testing LED
 #include <Adafruit_NeoPixel.h>
 //#ifdef __AVR__
 //  #include <avr/power.h>
 //#endif
+
+#define ESP8266_BAUD 115200
 
 #define PIN 9
 #define NUM_LEDS 1
@@ -19,6 +22,10 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, PIN, NEO_GRBW + NEO_KHZ800
 #define C_PIN  15
 #define D_PIN  16  
 #define NEAR_PIN 2
+
+String authStr = "";
+String ssidStr = "";
+String passStr = "";    // Set password to "" for open networks.
 
 int TT=3000;
 int latch=1000;
@@ -47,9 +54,9 @@ int stateA = 0;
 int enB = 3;
 int in3 = 5;
 int in4 = 4;
-int sensorB1 = A0;
-int sensorB2 = A1;
-int sensorA1 = A2;
+//int sensorB1 = A0;
+//int sensorB2 = A1;
+//int sensorA1 = A2;
 //int sensorA2 = A3;
 int delayB = 750;
 
@@ -62,33 +69,69 @@ bool doorClosed = false;
 int doorSensor = 0;
 int stateB = 2;
 
+BLYNK_WRITE(V1) {
+  int pinValue = param.asInt();
+}
+BLYNK_WRITE(V2) {
+  int pinValue = param.asInt();
+}
+BLYNK_WRITE(V3) {
+  int pinValue = param.asInt();
+}
+BLYNK_WRITE(V4) {
+  int pinValue = param.asInt();
+}
 
 void setup() { 
-  delay(500);
-  Serial.begin(9600);
+  Serial.begin(ESP8266_BAUD);
   // Set all the motor control pins to outputs
 
-  pinMode(A_PIN, INPUT);
-  pinMode(B_PIN, INPUT);    
-  pinMode(C_PIN, INPUT);
-  pinMode(D_PIN, INPUT);
+//  pinMode(A_PIN, INPUT);
+//  pinMode(B_PIN, INPUT);    
+//  pinMode(C_PIN, INPUT);
+//  pinMode(D_PIN, INPUT);
   
   //motor initialization
-  pinMode(in1, OUTPUT);
-  pinMode(in2, OUTPUT);
-  pinMode(in3, OUTPUT);
-  pinMode(in4, OUTPUT);
-  motorAStop();
-  motorBStop();
+//  pinMode(in1, OUTPUT);
+//  pinMode(in2, OUTPUT);
+//  pinMode(in3, OUTPUT);
+//  pinMode(in4, OUTPUT);
+//  motorAStop();
+//  motorBStop();
 
   //ESP connection
-  pinMode(NEAR_PIN, INPUT);
+//  pinMode(NEAR_PIN, INPUT);
+
+  readConfig();
+  int authLen = authStr.length() + 1 ;
+  int ssidLen = ssidStr.length() ;
+  int passLen = passStr.length() ;
+  char auth[authLen];
+  char ssid[ssidLen];
+  char pass[passLen];
+  authStr.toCharArray(auth, authLen, 0);   
+  ssidStr.toCharArray(ssid, ssidLen, 0);
+  passStr.toCharArray(pass, passLen, 0);
+  Blynk.begin(auth, ssid, pass);
+//  Serial.print("Auth : " );
+//  Serial.print(auth) ;
+//  Serial.println("___");
+//  Serial.print("Ssid : ");
+//  Serial.print(ssid) ;
+//  Serial.println("___");
+//  Serial.print("Password : ");
+//  Serial.print(pass) ;
+//  Serial.println("___");
+//  Serial.println("") ;
+  
+  
+
 
   //LED
-  strip.begin();
-  strip.show(); // Initialize all pixels to 'off'
-
-  lightOn(0, 255, 0);
+//  strip.begin();
+//  strip.show(); // Initialize all pixels to 'off'
+//
+//  lightOn(0, 255, 0);
 }
 
 
@@ -113,12 +156,18 @@ void unlock(int motorspeed) {
 
  
 void loop() {
- 
+  Blynk.run(); 
     
  // lightOn(0, 0, 255);
  //possibleDigitalOnlyTest();
     
- fastandfurious();
+  
+  if (Blynk.connected()) {
+    // TODO : Program indication LED as connected
+  } else {
+    // TODO : Program indication LED as not connected
+  }
+
 
 }
 
