@@ -3,13 +3,15 @@
 To control door lock/unlock, open/close
 
 
-Pin Mapping (ESP8266 - SD Module)
-D2 - CS 
-D5 - SCK
-D6 - MISO 
-D7 - MOSI 
-Vin - Vcc 
-GND - GND
+Pin Mapping 
+| ESP8266 | SD Module |
+| --- | --- |
+| D2 | CS | 
+| D5 | SCK |
+| D6 | MISO | 
+| D7 | MOSI |
+| Vin | Vcc |
+| GND | GND |
 
 
 Pin Mapping (ESP8266 - Shift Register 4595 )
