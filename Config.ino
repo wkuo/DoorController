@@ -1,7 +1,7 @@
 #include <SPI.h>
 #include <SD.h>
 
-#define PIN_SD_CS 4
+#define PIN_SD_CS 15
 
 File cfgFile;
 
@@ -28,7 +28,7 @@ void readConfig() {
           ssidStr = value;
         } else if (key.equalsIgnoreCase("pass")) {
           passStr = value;
-        } else if (key.equalsIgnoreCase("token")) {
+        } else if (key.equalsIgnoreCase("auth")) {
           authStr = value;
         }
         isKey = true;

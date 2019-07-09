@@ -16,6 +16,9 @@
 ////#define BRIGHTNESS 1
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, PIN, NEO_GRBW + NEO_KHZ800);
 
+#define SR_LOAD 0
+#define SR_CLK 10
+#define SR_DATA 16
 
 #define A_PIN  14
 #define B_PIN  10
@@ -113,19 +116,21 @@ void setup() {
   ssidStr.toCharArray(ssid, ssidLen, 0);
   passStr.toCharArray(pass, passLen, 0);
   Blynk.begin(auth, ssid, pass);
-//  Serial.print("Auth : " );
+//  Serial.print("Auth : '" );
 //  Serial.print(auth) ;
-//  Serial.println("___");
-//  Serial.print("Ssid : ");
+//  Serial.println("'");
+//  Serial.print("Ssid : '");
 //  Serial.print(ssid) ;
-//  Serial.println("___");
-//  Serial.print("Password : ");
+//  Serial.println("'");
+//  Serial.print("Password : '");
 //  Serial.print(pass) ;
-//  Serial.println("___");
-//  Serial.println("") ;
-  
-  
+//  Serial.println("'");
+//  Serial.println("") ;  
 
+  // Shift Register Pins  
+  pinMode(SR_CLK, OUTPUT);
+  pinMode(SR_LOAD, OUTPUT);
+  pinMode(SR_DATA, OUTPUT);
 
   //LED
 //  strip.begin();
@@ -154,6 +159,25 @@ void unlock(int motorspeed) {
 }
 
 
+void testShiftReg() {
+      byte data = B10000001;
+      digitalWrite(SR_LOAD, LOW);
+      shiftOut(SR_DATA, SR_CLK, MSBFIRST, data); 
+      digitalWrite(SR_LOAD, HIGH);
+      delay(500);
+      
+      data = B01000010;
+      digitalWrite(SR_LOAD, LOW);
+      shiftOut(SR_DATA, SR_CLK, MSBFIRST, data); 
+      digitalWrite(SR_LOAD, HIGH);
+      delay(500);
+      
+      data = B00100100;
+      digitalWrite(SR_LOAD, LOW);
+      shiftOut(SR_DATA, SR_CLK, MSBFIRST, data); 
+      digitalWrite(SR_LOAD, HIGH);
+      delay(500);
+}
  
 void loop() {
   Blynk.run(); 
@@ -163,6 +187,7 @@ void loop() {
     
   
   if (Blynk.connected()) {
+    testShiftReg();
     // TODO : Program indication LED as connected
   } else {
     // TODO : Program indication LED as not connected
