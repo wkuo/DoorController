@@ -1,5 +1,7 @@
 
 
+
+
 // Motor A is door
 void motorAStop() {
   digitalWrite(in1, LOW);

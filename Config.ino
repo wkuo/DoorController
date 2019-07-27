@@ -1,13 +1,11 @@
 #include <SPI.h>
 #include <SD.h>
 
-#define PIN_SD_CS 15
-
 File cfgFile;
 
 void readConfig() {
   Serial.print("Initializing SD card...");
-  if (!SD.begin(PIN_SD_CS)) {
+  if (!SD.begin(SD_CS)) {
     Serial.println("Initialization failed!");
     while (1);
   }
@@ -25,11 +23,14 @@ void readConfig() {
         //Serial.println("Line : " + key + " value " + value);
         int len = value.length();
         if (key.equalsIgnoreCase("ssid")) {
-          ssidStr = value;
+          value.toCharArray(ssid, len, 0);
+          //ssidStr = value;
         } else if (key.equalsIgnoreCase("pass")) {
-          passStr = value;
+          //passStr = value;
+          value.toCharArray(pass, len, 0);
         } else if (key.equalsIgnoreCase("auth")) {
-          authStr = value;
+          value.toCharArray(auth, len+1, 0);   
+          //authStr = value;
         }
         isKey = true;
         key = "";
@@ -47,5 +48,18 @@ void readConfig() {
     cfgFile.close();
   } else {
     Serial.println("Error opening config.txt");
-  }
+  }  
+}
+
+void printConfig() {
+  Serial.print("Auth : '" );
+  Serial.print(auth) ;
+  Serial.println("'");
+  Serial.print("Ssid : '");
+  Serial.print(ssid) ;
+  Serial.println("'");
+  Serial.print("Password : '");
+  Serial.print(pass) ;
+  Serial.println("'");
+  Serial.println("") ; 
 }
