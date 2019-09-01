@@ -79,7 +79,7 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, UNDEFINE_2, NEO_GRBW + NEO
 
 //LED functions
   void toggleNearLed() {
-    if (digitalRead(NEAR_PIN) == HIGH) {
-    } else {    
-    }
+//    if (digitalRead(NEAR_PIN) == HIGH) {
+//    } else {    
+//    }
   }

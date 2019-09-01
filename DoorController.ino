@@ -19,99 +19,149 @@
 #define SR_CLK 14           // SD3 CLOCK
 #define UNDEFINE_2 9        // SD2
 
-#define A_PIN  14
-#define B_PIN  10
-#define C_PIN  15
-#define D_PIN  16  
-#define NEAR_PIN 2
-
 char auth[64];
 char ssid[64];
 char pass[64];  // Set password to "" for open networks.
-//String authStr = "";
-//String ssidStr = "";
-//String passStr = "";    
 
-// B0000 0000 // all off
-// B0000 0001 // Door opening 
-// B0000 0010 // Door closing
-// B0000 0100 // Touch down
-// B0000 1000 // Jack Up
-// B0001 0000 // Door unlocking
-// B0010 0000 // Door locking
+SimpleTimer armMoveT ;
+SimpleTimer buttonT ;
+long armDura = 2500;
+long butDura = 4500;
+String armState = "IdleAtTop";
+String intent = "close";
+int armMoveTId = 0 ;
+int buttonTId = 1 ;
+unsigned long startT = 0 ;
+unsigned long accumIdleT = 0 ;
 
-#define ST_IDLE B00000000
-#define ST_OPEN B00000001
-#define ST_CLOSE 2
-#define ST_UNLOCK 16
-#define ST_LOCK 32
+boolean isArm(String txtState) {
+  return armState.equalsIgnoreCase(txtState);
+}
 
+boolean isIntent(String txtState) {
+  return intent.equalsIgnoreCase(txtState);  
+}
 
-int TT=3000;
-int latch=1000;
+void reachBottom() {
+  armState = "IdleAtBottom";
+  Serial.println("Arm timeout - reach bottom");
+  armStop();
+  if ( isIntent("open") ) {
+    motorAForward(255) ;
+  } 
+  if ( isIntent("close") ) {
+    motorABackward(255);    
+  }
+}
 
-int debounceT=70;
+void reachTop() {
+  armState = "IdleAtTop";
+  Serial.println("Auto retract done");
+  armStop();
+  accumIdleT = 0;
+}
 
-int timeout=1000;
-int timeoutA=1000;
-
-// Motor A
-int enA = 6; //previously 9
-int in1 = 8;
-int in2 = 7;
- 
-// Motor B 
-int enB = 3;
-int in3 = 5;
-int in4 = 4;
-
-// State
-bool butA = LOW;
-bool butB = LOW;
-bool butC = LOW;
-bool butD = LOW;
-
-bool doorClosed = true;
-bool armUp = true;
-int intent = 0;
+void resetArmTop() {
+  if ( isIntent("close") ) {
+    motorAStop();
+  }
+  if ( isArm("IdleAtBottom") ) {
+    Serial.println("Auto retract full");
+    armUp();
+    armMoveT.setTimeout(armDura, reachTop);
+  }
+  if ( isArm("IdleMoveDown") ) {
+    Serial.print("Auto retract Partial");
+    Serial.println(accumIdleT);
+    armUp();
+    armMoveT.setTimeout(accumIdleT, reachTop);
+  }
+}
 
 BLYNK_WRITE(V1) {
-  // Open Door
+  // OpenDoor 
+  // One press -> Press (armDown, reachBottom, open) Release (Idle -> timeout, armUp, idle)
+  // Multi -> Press (armDown) Release (idle) Press (armDown, reachBottom, open) Release (idle) Press (open) Release (idle, timeout, armUp, idle)
+  // Incomplete -> Press (armDown, until any half way) Release (Idle, timeout, armUp, idle)
   int pinValue = param.asInt();
-  Serial.print(pinValue);
+  intent = "open";
   if (pinValue > LOW) {
-    intent = ST_OPEN;
-  }
-  if (intent == ST_OPEN) {
-    writeSR(4);
-    delay(1000);
-    writeSR(ST_OPEN);
-    delay(5000);
-    writeSR(8);
-    intent = 0;
+    if ( isArm("IdleAtTop") || isArm("MoveDown") || isArm("IdleMoveDown") ) {
+      armDown();
+      if ( isArm("IdleMoveDown") ) {
+        startT = millis(); 
+        armMoveT.enable(armMoveTId);   
+        armState = "MoveDown"; 
+      }
+      if ( isArm("IdleAtTop") ) {
+        startT = millis();
+        armMoveTId = armMoveT.setTimeout(armDura, reachBottom);
+        armState = "MoveDown";
+      }
+    } 
+    if ( isArm("IdleAtBottom") ) {
+      motorAForward(255); 
+    }
   } else {
-    writeSR(ST_IDLE);
+     if ( isArm("MoveDown") ) {
+        accumIdleT = millis() - startT + accumIdleT ;
+        armMoveT.disable(armMoveTId);
+        armState = "IdleMoveDown";
+     }
+     if ( (isArm("IdleMoveDown") || isArm("IdleAtBottom")) ) {
+       buttonT.deleteTimer(buttonTId);
+       buttonTId = buttonT.setTimeout(butDura, resetArmTop);
+     }
+     armStop();
+     motorAStop();
   }
-  
 }
+
 BLYNK_WRITE(V2) {
+  // CloseDoor Trigger -> Check timeout -> rigDown -> closeDirection -> release ->  check another timeout -> stop push -> rigUp.
   int pinValue = param.asInt();
+  intent = "close";
   if (pinValue > LOW) {
-    intent = ST_CLOSE;
-  }
-  if (intent == ST_CLOSE) {
-    writeSR(4);
-    delay(1000);
-    writeSR(ST_OPEN);
-    delay(5000);
-    writeSR(8);
-    intent = 0;
+   if ( isArm("IdleAtTop") || isArm("MoveDown") || isArm("IdleMoveDown") ) {
+      armDown();
+      if ( isArm("IdleMoveDown") ) {
+        startT = millis(); 
+        armMoveT.enable(armMoveTId);   
+        armState = "MoveDown"; 
+      }
+      if ( isArm("IdleAtTop") ) {
+        startT = millis();
+        armMoveTId = armMoveT.setTimeout(armDura, reachBottom);
+        armState = "MoveDown";
+      }
+    } 
+    if ( isArm("IdleAtBottom") ) {
+        motorABackward(255); 
+    }
   } else {
-    writeSR(ST_IDLE);
+     if ( isArm("MoveDown") ) {
+        accumIdleT = millis() - startT + accumIdleT ;
+        armMoveT.disable(armMoveTId);
+        armState = "IdleMoveDown";
+     }
+     if ( (isArm("IdleMoveDown") || isArm("IdleAtBottom")) ) {
+       buttonT.deleteTimer(buttonTId);
+       buttonTId = buttonT.setTimeout(butDura, resetArmTop);
+     }
+     armStop();
+     motorAStop();
   }
 }
 BLYNK_WRITE(V3) {
   int pinValue = param.asInt();
+ if (pinValue > LOW) {  
+  Serial.println("reset");
+  Serial.print(accumIdleT);
+  accumIdleT=0;
+  armState = "IdleAtTop";
+  armMoveT.restartTimer(armMoveTId);
+  buttonT.restartTimer(buttonTId);
+  }
 }
 BLYNK_WRITE(V4) {
   int pinValue = param.asInt();
@@ -133,21 +183,6 @@ void setup() {
 //  pinMode(NEAR_PIN, INPUT);
 
   readConfig();
-//  int authLen = authStr.length() + 1 ;
-//  int ssidLen = ssidStr.length() ;
-//  int passLen = passStr.length() ;
-//  char authL[authLen];
-//  char ssidL[ssidLen];
-//  char passL[passLen];
-  //authStr.toCharArray(auth, authLen, 0);   
-  //ssidStr.toCharArray(ssid, ssidLen, 0);
-  //passStr.toCharArray(pass, passLen, 0);
-//  auth = authL;
-//  ssid = ssidL;
-//  pass = passL;
-//  strcpy(auth, authStr.c_str());
-//  strcpy(ssid, ssidStr.c_str());
-//  strcpy(pass, passStr.c_str());
   printConfig(); 
   Blynk.begin(auth, ssid, pass);
 
@@ -155,7 +190,6 @@ void setup() {
   pinMode(SR_CLK, OUTPUT);
   pinMode(SR_LOAD, OUTPUT);
   pinMode(SR_DATA, OUTPUT);
-  writeSR(ST_IDLE);
 
   //LED
 //  strip.begin();
@@ -164,29 +198,16 @@ void setup() {
 //  lightOn(0, 255, 0);
 }
 
-
-
-//void doorClose(int motorspeed) {
-//  motorAForward(motorspeed);
-//}
-//void doorOpen(int motorspeed) {
-//  motorABackward(motorspeed);
-//}
-//void lock(int motorspeed) {
-//  motorBForward(motorspeed);
-//}
-//void unlock(int motorspeed) {
-//  motorBBackward(motorspeed);
-//}
-
  
 void loop() {
+  armMoveT.run();
+  buttonT.run();
   Blynk.run(); 
- // lightOn(0, 0, 255);
+  // TODO : Program indication LED as device turned on
+  // lightOn(0, 0, 255);
 
   if (Blynk.connected()) {
-      //testShiftReg();
-    // TODO : Program indication LED as connected
+    // TODO : Program indication LED as connected (ready)
   } else {
     // TODO : Program indication LED as not connected
   }
